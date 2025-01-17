@@ -21,7 +21,7 @@ View all available components at https://ngxui.com
 Install the library using npm:
 
 ```bash
-npm install @omnedia/ngx-map
+npm install @omnedia/ngx-map dotted-map
 ```
 
 ## Usage
