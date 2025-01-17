@@ -1,0 +1,81 @@
+<div class="om-map" [ngClass]="styleClass" #OmMap>
+  <div class="om-map-svg" [innerHTML]="svgMap"></div>
+  <svg class="om-map-overlay" viewBox="0 0 800 400">
+    <ng-container *ngFor="let dot of dots; let i = index">
+      <g>
+        <path
+          #animatedPath
+          [attr.d]="createCurvedPath(projectPoint(dot.start.lat, dot.start.lng), projectPoint(dot.end.lat, dot.end.lng))"
+          fill="none"
+          [attr.stroke]="lineColor"
+          stroke-width="1"
+          [attr.stroke-dasharray]="getPathLength(i)"
+          [attr.stroke-dashoffset]="getPathLength(i)"
+        >
+          <ng-container *ngIf="animated && isInView">
+            <animate
+              [id]="'omMapPathAnimation' + i"
+              attributeName="stroke-dashoffset"
+              [attr.from]="getPathLength(i)"
+              [attr.to]="-1 * getPathLength(i)"
+              dur="2s"
+              [attr.begin]="getRandomDelay() + '; omMapPathAnimation' + i + '.end+' + getRandomDelay()"
+            />
+          </ng-container>
+          <ng-container *ngIf="!animated && isInView">
+            <animate
+              #animatedPathAnimation
+              [id]="'omMapPathAnimation' + i"
+              attributeName="stroke-dashoffset"
+              [attr.from]="getPathLength(i)"
+              [attr.to]="0"
+              dur="1s"
+              [attr.begin]="0.5 * i+'s'"
+              fill="freeze"
+            />
+          </ng-container>
+        </path>
+      </g>
+      <g>
+        <circle
+          [attr.cx]="projectPoint(dot.start.lat, dot.start.lng).x"
+          [attr.cy]="projectPoint(dot.start.lat, dot.start.lng).y"
+          r="2"
+          [attr.fill]="lineColor"
+        />
+        <circle
+          [attr.cx]="projectPoint(dot.start.lat, dot.start.lng).x"
+          [attr.cy]="projectPoint(dot.start.lat, dot.start.lng).y"
+          r="2"
+          [attr.fill]="lineColor"
+          opacity="0.5"
+        >
+          <ng-container *ngIf="isInView">
+            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+          </ng-container>
+        </circle>
+      </g>
+      <g>
+        <circle
+          [attr.cx]="projectPoint(dot.end.lat, dot.end.lng).x"
+          [attr.cy]="projectPoint(dot.end.lat, dot.end.lng).y"
+          r="2"
+          [attr.fill]="lineColor"
+        />
+        <circle
+          [attr.cx]="projectPoint(dot.end.lat, dot.end.lng).x"
+          [attr.cy]="projectPoint(dot.end.lat, dot.end.lng).y"
+          r="2"
+          [attr.fill]="lineColor"
+          opacity="0.5"
+        >
+          <ng-container *ngIf="isInView">
+            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite" />
+            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
+          </ng-container>
+        </circle>
+      </g>
+    </ng-container>
+  </svg>
+</div>
