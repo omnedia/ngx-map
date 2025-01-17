@@ -12,9 +12,9 @@ import {
   ViewChildren,
 } from "@angular/core";
 import { CommonModule, isPlatformBrowser } from "@angular/common";
-import DottedMap from "dotted-map";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Dot } from "./ngx-map.types";
+import DottedMap from "./dotted-map-wrapper";
 
 @Component({
   selector: "om-map",
