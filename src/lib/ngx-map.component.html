@@ -19,7 +19,7 @@
               [attr.from]="getPathLength(i)"
               [attr.to]="-1 * getPathLength(i)"
               dur="2s"
-              [attr.begin]="getRandomDelay() + '; omMapPathAnimation' + i + '.end+' + getRandomDelay()"
+              [attr.begin]="dot.animationStart"
             />
           </ng-container>
           <ng-container *ngIf="!animated && isInView">

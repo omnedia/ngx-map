@@ -38,7 +38,16 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input()
   styleClass: string | undefined;
 
-  @Input()
+  @Input("dots")
+  set updateDots(dots: Dot[]) {
+    dots = dots.map((dot, index) => {
+      dot.animationStart = `${this.getRandomDelay()}; omMapPathAnimation${index}.end+${this.getRandomDelay()}`;
+      return dot;
+    });
+
+    this.dots = dots;
+  }
+
   dots: Dot[] = [];
 
   @Input()
