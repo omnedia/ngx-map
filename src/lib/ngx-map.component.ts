@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   ElementRef,
@@ -8,12 +9,13 @@ import {
   OnDestroy,
   PLATFORM_ID,
   QueryList,
+  signal,
   ViewChild,
   ViewChildren,
 } from "@angular/core";
-import { CommonModule, isPlatformBrowser } from "@angular/common";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { Dot } from "./ngx-map.types";
+import {CommonModule, isPlatformBrowser} from "@angular/common";
+import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
+import {Dot} from "./ngx-map.types";
 import DottedMap from "./dotted-map-wrapper";
 
 @Component({
@@ -22,9 +24,10 @@ import DottedMap from "./dotted-map-wrapper";
   imports: [CommonModule],
   templateUrl: "./ngx-map.component.html",
   styleUrl: "./ngx-map.component.scss",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NgxMapComponent implements AfterViewInit, OnDestroy {
-  @ViewChild("OmMap", { static: true })
+  @ViewChild("OmMap", {static: true})
   container!: ElementRef<HTMLDivElement>;
 
   @ViewChildren("animatedPath") animatedPaths!: QueryList<
@@ -45,10 +48,10 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
       return dot;
     });
 
-    this.dots = dots;
+    this.dots.set(dots);
   }
 
-  dots: Dot[] = [];
+  dots = signal<Dot[]>([]);
 
   @Input()
   lineColor: string = "#0ea5e9";
@@ -88,32 +91,29 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input()
   animated: boolean = false;
 
-  svgMap!: SafeHtml;
+  svgMap = signal<SafeHtml>('');
 
   private pathLengths: Map<number, number> = new Map();
 
   private intersectionObserver?: IntersectionObserver;
   private hasInitializedObserver = false;
-  isInView = false;
+  isInView = signal(false);
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
     private readonly cdr: ChangeDetectorRef,
     private readonly sanitizer: DomSanitizer,
-  ) {}
+  ) {
+  }
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId) && !this.hasInitializedObserver) {
       this.hasInitializedObserver = true;
       this.intersectionObserver = new IntersectionObserver(([entry]) => {
-        const wasInView = this.isInView;
-        this.isInView = entry.isIntersecting;
+        const wasInView = this.isInView();
+        this.isInView.set(entry.isIntersecting);
 
-        if (wasInView !== this.isInView) {
-          this.cdr.detectChanges();
-        }
-
-        if (this.isInView && !wasInView) {
+        if (this.isInView() && !wasInView) {
           this.triggerAnimations();
         }
       });
@@ -124,7 +124,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private generateSvgMap() {
-    const map = new DottedMap({ height: 100, grid: "diagonal" });
+    const map = new DottedMap({height: 100, grid: "diagonal"});
 
     const rawSvg = map.getSVG({
       radius: this.mapDotsRadius,
@@ -133,8 +133,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
       backgroundColor: this.backgroundColor,
     });
 
-    this.svgMap = this.sanitizer.bypassSecurityTrustHtml(rawSvg);
-    this.cdr.detectChanges();
+    this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(rawSvg));
   }
 
   ngOnDestroy(): void {
@@ -144,7 +143,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   projectPoint(lat: number, lng: number) {
     const x = (lng + 180) * (800 / 360);
     const y = (90 - lat) * (400 / 180);
-    return { x, y };
+    return {x, y};
   }
 
   createCurvedPath(

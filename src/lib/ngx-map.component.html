@@ -1,7 +1,7 @@
 <div class="om-map" [ngClass]="styleClass" #OmMap>
-  <div class="om-map-svg" [innerHTML]="svgMap"></div>
+  <div class="om-map-svg" [innerHTML]="svgMap()"></div>
   <svg class="om-map-overlay" viewBox="0 0 800 400">
-    <ng-container *ngFor="let dot of dots; let i = index">
+    @for (dot of dots(); track $index) {
       <g>
         <path
           #animatedPath
@@ -9,31 +9,31 @@
           fill="none"
           [attr.stroke]="lineColor"
           stroke-width="1"
-          [attr.stroke-dasharray]="getPathLength(i)"
-          [attr.stroke-dashoffset]="getPathLength(i)"
+          [attr.stroke-dasharray]="getPathLength($index)"
+          [attr.stroke-dashoffset]="getPathLength($index)"
         >
-          <ng-container *ngIf="animated && isInView">
+          @if (animated && isInView()) {
             <animate
-              [id]="'omMapPathAnimation' + i"
+              [id]="'omMapPathAnimation' + $index"
               attributeName="stroke-dashoffset"
-              [attr.from]="getPathLength(i)"
-              [attr.to]="-1 * getPathLength(i)"
+              [attr.from]="getPathLength($index)"
+              [attr.to]="-1 * getPathLength($index)"
               dur="2s"
               [attr.begin]="dot.animationStart"
             />
-          </ng-container>
-          <ng-container *ngIf="!animated && isInView">
+          }
+          @if (!animated && isInView()) {
             <animate
               #animatedPathAnimation
-              [id]="'omMapPathAnimation' + i"
+              [id]="'omMapPathAnimation' + $index"
               attributeName="stroke-dashoffset"
-              [attr.from]="getPathLength(i)"
+              [attr.from]="getPathLength($index)"
               [attr.to]="0"
               dur="1s"
-              [attr.begin]="0.5 * i+'s'"
+              [attr.begin]="0.5 * $index +'s'"
               fill="freeze"
             />
-          </ng-container>
+          }
         </path>
       </g>
       <g>
@@ -50,10 +50,10 @@
           [attr.fill]="lineColor"
           opacity="0.5"
         >
-          <ng-container *ngIf="isInView">
-            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
-          </ng-container>
+          @if (isInView()) {
+            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite"/>
+          }
         </circle>
       </g>
       <g>
@@ -70,12 +70,12 @@
           [attr.fill]="lineColor"
           opacity="0.5"
         >
-          <ng-container *ngIf="isInView">
-            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite" />
-            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite" />
-          </ng-container>
+          @if (isInView()) {
+            <animate attributeName="r" from="2" to="8" dur="1.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" from="0.5" to="0" dur="1.5s" repeatCount="indefinite"/>
+          }
         </circle>
       </g>
-    </ng-container>
+    }
   </svg>
 </div>
