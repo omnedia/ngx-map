@@ -1,11 +1,11 @@
 {
   "name": "@omnedia/ngx-map",
   "description": "A simple component library to create a map with animated connections.",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "peerDependencies": {
     "@angular/common": "^20.0.0",
     "@angular/core": "^20.0.0",
-    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser": "^20.0.0",
     "dotted-map": "^2.2.3"
   },
   "dependencies": {

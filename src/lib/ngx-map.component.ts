@@ -1,7 +1,6 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   Inject,
@@ -101,7 +100,6 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
-    private readonly cdr: ChangeDetectorRef,
     private readonly sanitizer: DomSanitizer,
   ) {
   }
