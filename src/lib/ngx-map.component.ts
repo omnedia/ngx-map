@@ -97,6 +97,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   private intersectionObserver?: IntersectionObserver;
   private hasInitializedObserver = false;
   isInView = signal(false);
+  private mapGenerationTimeout?: number;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
@@ -122,16 +123,19 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private generateSvgMap() {
-    const map = new DottedMap({height: 100, grid: "diagonal"});
+    clearTimeout(this.mapGenerationTimeout);
+    this.mapGenerationTimeout = setTimeout(() => {
+      const map = new DottedMap({height: 100, grid: "diagonal"});
 
-    const rawSvg = map.getSVG({
-      radius: this.mapDotsRadius,
-      color: this.mapColor,
-      shape: this.mapDotsShape,
-      backgroundColor: this.backgroundColor,
-    });
+      const rawSvg = map.getSVG({
+        radius: this.mapDotsRadius,
+        color: this.mapColor,
+        shape: this.mapDotsShape,
+        backgroundColor: this.backgroundColor,
+      });
 
-    this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(rawSvg));
+      this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(rawSvg));
+    }, 0);
   }
 
   ngOnDestroy(): void {
