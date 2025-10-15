@@ -15,7 +15,6 @@ import {
 import {CommonModule, isPlatformBrowser} from "@angular/common";
 import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 import {Dot} from "./ngx-map.types";
-import DottedMap from "./dotted-map-wrapper";
 
 @Component({
   selector: "om-map",
@@ -38,6 +37,9 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   >;
 
   @Input()
+  precomputedMap?: object | string;
+
+  @Input()
   styleClass: string | undefined;
 
   @Input("dots")
@@ -58,7 +60,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input("backgroundColor")
   set updateBackgroundColor(color: string) {
     this.backgroundColor = color;
-    this.generateSvgMap();
+    this.generateSvgMapDebounced();
   }
 
   backgroundColor?: string;
@@ -66,7 +68,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input("mapColor")
   set updateMapColor(color: string) {
     this.mapColor = color;
-    this.generateSvgMap();
+    this.generateSvgMapDebounced();
   }
 
   mapColor: string = "rgba(0,0,0,0.40)";
@@ -74,7 +76,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input("mapDotsShape")
   set updateMapDotsShape(shape: "circle" | "hexagon") {
     this.mapDotsShape = shape;
-    this.generateSvgMap();
+    this.generateSvgMapDebounced();
   }
 
   mapDotsShape: "circle" | "hexagon" = "circle";
@@ -82,7 +84,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   @Input("mapDotsRadius")
   set updateMapDotsRadius(radius: number) {
     this.mapDotsRadius = radius;
-    this.generateSvgMap();
+    this.generateSvgMapDebounced();
   }
 
   mapDotsRadius = 0.22;
@@ -97,7 +99,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
   private intersectionObserver?: IntersectionObserver;
   private hasInitializedObserver = false;
   isInView = signal(false);
-  private mapGenerationTimeout?: number;
+  private debounceTimer?: number;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
@@ -119,23 +121,7 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
       this.intersectionObserver.observe(this.container.nativeElement);
     }
 
-    this.generateSvgMap();
-  }
-
-  private generateSvgMap() {
-    clearTimeout(this.mapGenerationTimeout);
-    this.mapGenerationTimeout = setTimeout(() => {
-      const map = new DottedMap({height: 100, grid: "diagonal"});
-
-      const rawSvg = map.getSVG({
-        radius: this.mapDotsRadius,
-        color: this.mapColor,
-        shape: this.mapDotsShape,
-        backgroundColor: this.backgroundColor,
-      });
-
-      this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(rawSvg));
-    }, 0);
+    this.generateSvgMapDebounced();
   }
 
   ngOnDestroy(): void {
@@ -169,6 +155,53 @@ export class NgxMapComponent implements AfterViewInit, OnDestroy {
 
   getRandomDelay(): string {
     return `${((Math.random() + 1) * 2).toFixed(2)}s`;
+  }
+
+  private async generateSvgMapDebounced() {
+    clearTimeout(this.debounceTimer);
+
+    if (this.precomputedMap) {
+      const DottedMap = (await import('./dotted-map-wrapper')).default;
+      const mapConfig = {
+        map:
+          typeof this.precomputedMap === 'string'
+            ? JSON.parse(this.precomputedMap)
+            : this.precomputedMap,
+        height: 100, grid: "diagonal",
+      };
+
+      const map = new DottedMap(mapConfig);
+      const rawSvg = map.getSVG({
+        radius: this.mapDotsRadius,
+        color: this.mapColor,
+        shape: this.mapDotsShape,
+        backgroundColor: this.backgroundColor,
+      });
+
+      this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(rawSvg));
+      return;
+    }
+
+    this.debounceTimer = window.setTimeout(() => this.generateSvgMap(), 250);
+  }
+
+  private generateSvgMap() {
+    if (typeof Worker === 'undefined') return; // fallback for SSR
+
+    const worker = new Worker(new URL('./map-generator.worker', import.meta.url), {type: 'module'});
+    worker.postMessage({
+      options: {
+        radius: this.mapDotsRadius,
+        color: this.mapColor,
+        shape: this.mapDotsShape,
+        backgroundColor: this.backgroundColor,
+      },
+    });
+
+    worker.onmessage = ({data}) => {
+      this.svgMap.set(this.sanitizer.bypassSecurityTrustHtml(data));
+      worker.terminate();
+    };
   }
 
   private triggerAnimations(): void {

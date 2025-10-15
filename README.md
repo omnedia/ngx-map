@@ -7,7 +7,7 @@
 This library is part of the NGXUI ecosystem. <br>
 View all available components at https://ngxui.com
 
-`@omnedia/ngx-map` is an Angular library for creating customizable, animated world maps with dotted grid layouts and path animations. Perfect for visualizing geographic connections, this component offers smooth animations and flexible configurations for diverse use cases.
+`@omnedia/ngx-map` is an Angular library for creating customizable, animated world maps with dotted grid layouts and path animations. Perfect for visualizing geographic connections, this component offers smooth animations and flexible configurations for diverse use cases. <br>
 
 ## Features
 
@@ -15,6 +15,8 @@ View all available components at https://ngxui.com
 - Path animations between points with configurable delays and durations.
 - Responsive design with support for dark and light themes.
 - Built-in sanitization for safe SVG rendering.
+- Precomputed map support for instant rendering and smaller bundles.
+- Web Worker offloading for smooth UI performance.
 
 ## Installation
 
@@ -29,18 +31,20 @@ npm install @omnedia/ngx-map dotted-map
 Import the `NgxMapComponent` in your Angular module or component:
 
 ```typescript
-import { NgxMapComponent } from '@omnedia/ngx-map';
+import {NgxMapComponent} from '@omnedia/ngx-map';
 
 @Component({
   ...
-  imports: [NgxMapComponent],
-  ...
+    imports:
+[NgxMapComponent],
+...
 })
 ```
 
 Use the component in your template:
 
 ```html
+
 <om-map
   [dots]="[
     { start: { lat: 64.2008, lng: -149.4937 }, end: { lat: 34.0522, lng: -118.2437 } },
@@ -63,6 +67,7 @@ Use the component in your template:
 ## API
 
 ```html
+
 <om-map
   [dots]="dots"
   [lineColor]="lineColor"
@@ -73,6 +78,7 @@ Use the component in your template:
   [animated]="animated"
   [styleClass]="styleClass"
   [style]="style"
+  [precomputedMap]="precomputedMap"
 ></om-map>
 ```
 
@@ -91,10 +97,77 @@ Use the component in your template:
 - `mapDotsRadius` (optional): Radius of the dots. Defaults to `0.22`.
 - `animated` (optional): Whether to animate the paths. Defaults to `false`.
 - `styleClass` (optional): Custom CSS class for additional styling.
+- `precomputedMap` (optional): Precomputed map JSON (object or string).
+
+## 🚀 Performance Options
+
+`@omnedia/ngx-map` now supports **two ways** to generate maps for maximum performance:
+
+### **1. Default – Worker-based generation (automatic)**
+
+The library automatically uses a Web Worker to offload the heavy dotted-map computation to a background thread.
+No extra setup required.
+
+### **2. Precomputed Map (fastest)**
+
+If you always use the same map grid, you can precompute it once and ship it as JSON.
+This completely removes runtime map generation and makes initial render instantaneous.
+
+#### How to create a precomputed map
+
+Run once in Node:
+
+```bash
+npm install dotted-map
+```
+
+```js
+// scripts/precompute-map.js
+const {getMapJSON} = require('dotted-map');
+const fs = require('fs');
+const path = require('path');
+
+const outputFile = path.resolve('./src/precomputed-map.json');
+fs.writeFileSync(outputFile, getMapJSON({height: 100, grid: 'diagonal'}));
+console.log('✅ Precomputed map saved:', outputFile);
+```
+
+Run it:
+
+```bash
+node scripts/precompute-map.js
+```
+
+### **Using the precomputed map**
+
+```ts
+import precomputedMap from './precomputed-map.json';
+
+@Component({
+  standalone: true,
+  imports: [NgxMapComponent],
+  template: `
+    <om-map
+      [dots]="dots"
+      [precomputedMap]="map"
+      [animated]="true"
+      [mapColor]="'rgba(0,0,0,0.4)'"
+      [backgroundColor]="'#020300'"
+    ></om-map>
+  `,
+})
+export class DemoComponent {
+  map = precomputedMap;
+  dots = [
+    {start: {lat: 40.7, lng: -73.9}, end: {lat: 48.8, lng: 2.3}},
+  ];
+}
+```
 
 ## Example
 
 ```html
+
 <om-map
   [dots]="[
     { start: { lat: 51.5074, lng: -0.1278 }, end: { lat: 40.7128, lng: -74.006 } },
